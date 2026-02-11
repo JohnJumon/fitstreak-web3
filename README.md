@@ -90,15 +90,13 @@ This immediately gives a 3-day streak for mint testing.
 
 1. Push to GitHub
 2. Import project in Vercel
-3. Set **Root Directory** to:
-   `Workout Logging with Blockchain`
-4. Add Vercel env vars:
+3. Add Vercel env vars:
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
    - `SUPABASE_SERVICE_ROLE_KEY`
    - `NEXT_PUBLIC_BADGE_CONTRACT`
    - `NEXT_PUBLIC_RPC_URL`
-5. Deploy
+4. Deploy
 
 ## Important behavior
 
