@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import "./styles.css";
+import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Workout Streak + Badge Minting",
+  title: "FitStreak",
   description: "Track workouts and mint streak milestone badges."
 };
 

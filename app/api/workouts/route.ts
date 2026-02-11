@@ -17,6 +17,46 @@ function isValidBody(body: Partial<WorkoutInput>): body is WorkoutInput {
   );
 }
 
+function normalizeWorkout(row: {
+  id: string;
+  wallet_address: string;
+  workout_type: string;
+  duration_min: number;
+  notes: string | null;
+  workout_date: string;
+  created_at: string;
+}) {
+  return {
+    id: row.id,
+    walletAddress: row.wallet_address,
+    workoutType: row.workout_type,
+    durationMin: row.duration_min,
+    notes: row.notes ?? "",
+    workoutDate: row.workout_date,
+    createdAt: row.created_at
+  };
+}
+
+export async function GET(request: NextRequest) {
+  const wallet = request.nextUrl.searchParams.get("wallet");
+  if (!wallet || !isValidAddress(wallet)) {
+    return NextResponse.json({ error: "Valid wallet query param required" }, { status: 400 });
+  }
+
+  const { data, error } = await supabaseAdmin
+    .from("workout_logs")
+    .select("id, wallet_address, workout_type, duration_min, notes, workout_date, created_at")
+    .eq("wallet_address", wallet.toLowerCase())
+    .order("workout_date", { ascending: false });
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  const workouts = (data ?? []).map(normalizeWorkout);
+  return NextResponse.json({ workouts }, { status: 200 });
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = (await request.json()) as Partial<WorkoutInput>;
@@ -41,7 +81,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({ workout: data }, { status: 201 });
+    return NextResponse.json({ workout: normalizeWorkout(data) }, { status: 201 });
   } catch {
     return NextResponse.json({ error: "Unexpected error" }, { status: 500 });
   }

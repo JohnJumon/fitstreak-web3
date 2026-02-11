@@ -5,8 +5,12 @@ export type WorkoutInput = {
   notes?: string;
 };
 
-export type WorkoutLog = WorkoutInput & {
+export type WorkoutLog = {
   id: string;
+  walletAddress: string;
+  workoutType: string;
+  durationMin: number;
+  notes: string;
   workoutDate: string;
   createdAt: string;
 };
