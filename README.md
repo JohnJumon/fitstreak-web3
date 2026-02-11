@@ -1,89 +1,109 @@
-# Workout Streak + Badge Minting dApp
+# FitStreak
 
-Simple MVP flow:
+Workout Streak + Badge Minting dApp built with Next.js, Supabase, and Solidity.
+
+## Core flow
 
 1. Connect wallet (MetaMask)
 2. Log workout (type + duration + notes)
-3. Store logs in Supabase
-4. Mint milestone badge NFT when streak threshold is reached
+3. Store workout logs in Supabase
+4. Track streak milestones (3/7/14/30)
+5. Mint milestone badge NFT on Sepolia
+
+## Pages
+
+- `/` Landing page + connect wallet
+- `/log` Workout logs, streak stats, mint flow
+- `/profile` Wallet info + unlockable badges
 
 ## Tech stack
 
 - Next.js (App Router, TypeScript)
+- Tailwind CSS
 - viem (wallet + contract calls)
-- Supabase (Postgres + RLS + REST)
-- Solidity (OpenZeppelin ERC721)
+- Supabase (Postgres + API)
+- Solidity + Hardhat (Sepolia)
 
-## Project structure
+## Environment variables
 
-```text
-.
-|- app/
-|  |- api/
-|  |  |- workouts/route.ts
-|  |  `- streak/route.ts
-|  |- page.tsx
-|  `- layout.tsx
-|- components/
-|  |- WorkoutForm.tsx
-|  |- StreakCard.tsx
-|  `- MintBadgeButton.tsx
-|- contracts/
-|  `- BadgeMinter.sol
-|- lib/
-|  |- contract.ts
-|  |- eth.ts
-|  |- milestones.ts
-|  |- streak.ts
-|  |- supabaseAdmin.ts
-|  |- supabaseClient.ts
-|  `- types.ts
-|- scripts/
-|  `- deploy.ts
-|- supabase/
-|  `- schema.sql
-`- .env.example
+Create `Workout Logging with Blockchain/.env.local`:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+
+NEXT_PUBLIC_BADGE_CONTRACT=
+NEXT_PUBLIC_RPC_URL=
+
+SEPOLIA_RPC_URL=
+PRIVATE_KEY=
 ```
 
-## Setup
+Notes:
+- `NEXT_PUBLIC_RPC_URL` and `SEPOLIA_RPC_URL` can be the same Sepolia endpoint.
+- `PRIVATE_KEY` is only for local Hardhat deployment.
+- Never commit `.env.local`.
 
-1. Install dependencies:
+## Local setup
 
+1. Install dependencies
 ```bash
 npm install
 ```
 
-2. Copy env file and fill values:
-
-```bash
-cp .env.example .env.local
-```
-
-3. Create Supabase table:
-
+2. Create Supabase schema
 - Open Supabase SQL editor
 - Run `supabase/schema.sql`
 
-4. Deploy contract:
-
+3. Compile + deploy contract to Sepolia
 ```bash
+npx hardhat compile
 npx hardhat run scripts/deploy.ts --network sepolia
 ```
 
-5. Put deployed address in `.env.local` as `NEXT_PUBLIC_BADGE_CONTRACT`
+4. Set deployed contract address in `.env.local`
+```env
+NEXT_PUBLIC_BADGE_CONTRACT=0x...
+```
 
-6. Run app:
-
+5. Run app
 ```bash
 npm run dev
 ```
 
-## Milestones
+## Fast testing without waiting days
 
-- Default milestones: 3, 7, 14, 30 day streaks
-- Contract mints one badge per milestone per wallet
+Seed logs directly in Supabase SQL using your wallet address:
 
-## Notes
+```sql
+insert into public.workout_logs (wallet_address, workout_type, duration_min, notes, workout_date)
+values
+('0xyourwallet...', 'Cardio', 20, 'Seed day -2', current_date - interval '2 day'),
+('0xyourwallet...', 'Strength', 30, 'Seed day -1', current_date - interval '1 day'),
+('0xyourwallet...', 'Mobility', 25, 'Seed today', current_date);
+```
 
-- Server-side mint endpoint is omitted for simplicity; current flow mints from connected wallet.
-- For production, use a backend relayer (Defender / server wallet) if you do not want user-paid gas.
+This immediately gives a 3-day streak for mint testing.
+
+## Deploy to Vercel
+
+1. Push to GitHub
+2. Import project in Vercel
+3. Set **Root Directory** to:
+   `Workout Logging with Blockchain`
+4. Add Vercel env vars:
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - `SUPABASE_SERVICE_ROLE_KEY`
+   - `NEXT_PUBLIC_BADGE_CONTRACT`
+   - `NEXT_PUBLIC_RPC_URL`
+5. Deploy
+
+## Important behavior
+
+- Mint flow includes step states:
+  `Prepare -> Sign -> Confirm -> Minted`
+- Success modal appears after onchain confirmation.
+- Log/profile auto-refresh after mint.
+- Sticky mint reminder only appears when milestone is unlocked and not yet minted.
